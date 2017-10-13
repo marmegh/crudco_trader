@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>My Trades</title>
+    {%extends 'trades/template.html'%}
+  </head>
+  <body>
+    {%block content%}
+      <div class="container">
+        <div class="row">
+          <div class="one-third column">
+            <h3>{{trade.item}}</h3>
+            <img src="/static/product/{{trade.item}}.png" alt="">
+          </div>
+          <div class="one-third column">
+            <h3>Quantity: {{trade.quantity}}</h3>
+          </div>
+          <div class="one-third column">
+            <img src="/static/images/{{trade.category}}.png" alt="{{trade.category}}"/>
+          </div>
+        </div>
+        <div class="row">
+          <div class="one-half column">
+            <h3>Courtesy of: <a href="/profile/{{trade.originator.id}}">{{trade.originator.username}}</a></h3>
+            {%if page is 1%}
+            <a href="/trades/delete/{{trade.id}}">
+              <button type="button" name="delete">Delete</button></a>
+            {%endif%}
+          </div>
+          <div class="one-half column">
+            <h3>Claimed by:
+              {%if trade.recipient is null and page is not 1%}
+                <a href="/trades/receive/{{trade.id}}">
+                  <button type="button" name="claim">Claim Trade</button></a>
+              {%else%}
+              <a href="/profile/{{trade.recipient.id}}">{{trade.recipient.username}}</a></h3>
+              {%endif%}
+          </div>
+        </div>
+      </div>
+      <h3>Description: {{trade.description}}</h3>
+      {%if page is 1 or page is 2%}
+        {%if page is 2%}
+        <a href="/trades/complete/{{trade.id}}">
+          <button type="button" name="complete">Complete</button></a>
+        {%endif%}
+        <h3>Trade Coordination</h3>
+        <p>Please use the discussion area below to coordinate logistics of your trade.</p>
+        {%for comment in comments%}
+          <p>{{comment.commentator.username}} said {{comment.comment}} -
+          {{comment.created_at}}
+          {%if user.id == comment.commentator.id%}
+            <a href="/communication/delete/{{comment.id}}">Delete</a>
+          {%endif%}</p>
+        {%endfor%}
+        {%if trade.status == "pending"%}
+          <form action="/communication/create/{{trade.id}}" method='post'>
+            {%csrf_token%}
+            <textarea name="comment" cols="90" rows="10"></textarea>
+            <p><input type="submit" name="submit" value="submit"></p>
+          </form>
+        {%endif%}
+        {%if trade.status == "completed"%}
+        {% if messages %}
+          <ul class="messages">
+            {% for message in messages %}
+              <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
+              {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}Important: {% endif %}
+              {{ message }}
+              </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+          {%if page is 1%}
+            <form action="/communication/review/{{trade.recipient.id}}" method="POST">
+          {%else%}
+            <form action="/communication/review/{{trade.originator.id}}" method="POST">
+          {%endif%}
+            {% csrf_token %}
+            <h6>Review:</h6> <textarea name="review" rows="8" cols="80"></textarea>
+            <h6>Rating:
+              <select name="rating">
+                <option value=1>1</option>
+                <option value=2>2</option>
+                <option value=3>3</option>
+                <option value=4>4</option>
+                <option value=5>5</option>
+              </select> stars
+            </h6>
+            <input type="hidden" name="id" value="{{trade.id}}">
+            <p><input type="submit" name="submit" value="submit"></p>
+          </form>
+        {%endif%}
+      {%endif%}
+    {%endblock%}
+  </body>
+</html>
